@@ -148,6 +148,26 @@
                 android:resource="@xml/widget_info_large" />
         </receiver>
 
+        <!-- Firebase Cloud Messaging: announcements pushed from the Firebase console -->
+        <service
+            android:name=".push.ZincFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- FCM defaults: channel, icon and accent color for background notifications -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="zinc_announcements" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/md_theme_primary" />
+
 
     </application>
 

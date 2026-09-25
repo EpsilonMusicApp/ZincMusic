@@ -481,6 +481,11 @@ class MainActivity : AppCompatActivity() {
                             activity = this@MainActivity,
                             viewModel = playerViewModel
                         )
+
+                        // Firebase announcement banner — slides in from the top whenever
+                        // a push arrives while the app is open. Overlays every screen
+                        // and the player sheet.
+                        com.zincmusic.app.push.InAppNotificationHost()
                     }
                 }
             }

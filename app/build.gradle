@@ -6,6 +6,22 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     id("com.github.ben-manes.versions") version "0.54.0"
+    // Firebase Gradle plugins are resolved up-front but only *applied* when the
+    // Firebase config file is committed (see the block right below).
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics.plugin) apply false
+}
+
+// Firebase (Analytics + Crashlytics + Cloud Messaging) is wired so that it only
+// activates when app/google-services.json exists. Without the config file the
+// build stays green, the Firebase SDKs stay dormant at runtime, and pushing the
+// real google-services.json into the repo is enough to switch everything on.
+if (project.file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+    apply plugin: 'com.google.firebase.crashlytics'
+    logger.lifecycle('Zinc Music: google-services.json found -> Firebase Analytics, Crashlytics and Messaging ENABLED.')
+} else {
+    logger.lifecycle('Zinc Music: app/google-services.json not found -> Firebase plugins skipped (dormant build).')
 }
 
 // Read credentials from local.properties (secure, gitignored)
@@ -35,8 +51,8 @@ android {
         applicationId "com.zincmusic.app"
         minSdk 25
         targetSdk 37
-        versionCode 5
-        versionName "1.1.3"
+        versionCode 6
+        versionName "1.1.4"
         ndk {
             // Modern devices are arm64; shipping one ABI keeps the APK
             // small and light (Epsilon-Music-style build policy).
@@ -163,6 +179,13 @@ dependencies {
     // Hilt
     implementation libs.hilt.android
     ksp libs.hilt.compiler
+
+    // Firebase — Analytics + Crashlytics + Cloud Messaging (versions pinned by the BoM).
+    // Plugin activation is conditional on app/google-services.json, see top of file.
+    implementation platform(libs.firebase.bom)
+    implementation libs.firebase.analytics
+    implementation libs.firebase.crashlytics
+    implementation libs.firebase.messaging
 
     // Liquid Glass Effect
     implementation libs.liquid

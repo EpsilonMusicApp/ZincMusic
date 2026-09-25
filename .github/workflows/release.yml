@@ -83,6 +83,7 @@ jobs:
             * One-click downloads for offline listening
             * Music haptics and listening recap
             * Home screen widgets
+            * Over-the-air announcements, analytics and crash reporting (Firebase)
             
             **How to install:** download the APK below, open it on your Android device
             (Android 7.1+) and allow installation from unknown sources when prompted.

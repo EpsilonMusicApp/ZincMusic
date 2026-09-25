@@ -1,7 +1,11 @@
 package com.zincmusic.app
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import coil.ImageLoader
@@ -15,6 +19,8 @@ import com.zincmusic.app.data.innertube.InnerTubeClient
 import com.zincmusic.app.data.innertube.NewPipeStreamExtractor
 import com.zincmusic.app.util.CacheManager
 import com.google.android.material.color.DynamicColors
+import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 
@@ -22,8 +28,20 @@ import kotlinx.coroutines.launch
 class ZincMusicApplication : Application(), ImageLoaderFactory {
 
     companion object {
+        private const val TAG = "ZincMusicApp"
+
+        /** Notification channel used by Firebase Cloud Messaging announcements. */
+        const val ANNOUNCEMENT_CHANNEL_ID = "zinc_announcements"
+
         lateinit var instance: ZincMusicApplication
             private set
+
+        /** True while at least one activity of this process is started (app visible). */
+        @Volatile
+        var isAppInForeground: Boolean = false
+            internal set
+
+        private var startedActivityCount = 0
     }
 
 
@@ -111,5 +129,65 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
 
         // Clean up old temp files on app start
         CacheManager.clearOldCache(this)
+
+        registerForegroundTracker()
+        ensureAnnouncementChannel()
+        initFirebaseMessaging()
+    }
+
+    /**
+     * Tracks whether the app is currently visible so FCM announcements can be
+     * routed either to the in-app banner (foreground) or a system notification
+     * (background). Uses only process-level lifecycle callbacks — zero overhead.
+     */
+    private fun registerForegroundTracker() {
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) {
+                startedActivityCount++
+                isAppInForeground = true
+            }
+
+            override fun onActivityStopped(activity: Activity) {
+                startedActivityCount = (startedActivityCount - 1).coerceAtLeast(0)
+                isAppInForeground = startedActivityCount > 0
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: android.os.Bundle?) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: android.os.Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+    }
+
+    /** Creates the channel FCM uses for announcements while the app is backgrounded. */
+    private fun ensureAnnouncementChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                ANNOUNCEMENT_CHANNEL_ID,
+                getString(R.string.notif_channel_announcements),
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        }
+    }
+
+    /**
+     * Subscribes every install to the broadcast topic "all" — target it from the
+     * Firebase Console (Engage > Messaging > New campaign > Topic: all) to reach
+     * all users. When no Firebase config is committed (no google-services.json)
+     * the app stays fully functional and all Firebase features remain dormant.
+     */
+    private fun initFirebaseMessaging() {
+        try {
+            if (FirebaseApp.getApps(this).isNotEmpty()) {
+                FirebaseMessaging.getInstance().subscribeToTopic("all")
+                Log.i(TAG, "Firebase ready: analytics, crashlytics and topic 'all' subscribed")
+            } else {
+                Log.i(TAG, "Firebase config not present (no google-services.json) - telemetry dormant")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Firebase initialization skipped: ${e.message}")
+        }
     }
 }
