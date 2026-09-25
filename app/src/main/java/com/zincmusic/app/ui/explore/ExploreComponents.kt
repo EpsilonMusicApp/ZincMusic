@@ -2,7 +2,6 @@
  
 package com.zincmusic.app.ui.explore
  
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -553,7 +552,7 @@ fun HomeSectionRow(
 ) {
     val hasSongsOnly = section.items.isNotEmpty() && section.items.all { it is SearchItem.Song }
 
-    Column(modifier = Modifier.padding(vertical = 4.dp).animateContentSize()) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
         // Universal Section Header
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp),

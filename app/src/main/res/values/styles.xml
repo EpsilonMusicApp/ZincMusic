@@ -11,8 +11,8 @@
         <item name="colorSurfaceContainerHigh">@color/md_theme_light_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_light_surfaceContainerHighest</item>
 
-        <item name="android:fontFamily">@font/google_flex</item>
-        <item name="fontFamily">@font/google_flex</item>
+        <item name="android:fontFamily">@font/zinc_type</item>
+        <item name="fontFamily">@font/zinc_type</item>
         <item name="android:fontVariationSettings">"'ROND' 100"</item>
         <item name="fontVariationSettings">"'ROND' 100"</item>
 
@@ -118,8 +118,8 @@
     <style name="TextAppearance.ZincMusic.Lyrics" parent="TextAppearance.Material3.HeadlineMedium">
         <item name="android:textSize">34sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:fontFamily">@font/google_flex</item>
-        <item name="fontFamily">@font/google_flex</item>
+        <item name="android:fontFamily">@font/zinc_type</item>
+        <item name="fontFamily">@font/zinc_type</item>
         <item name="android:fontVariationSettings">"'wdth' 112, 'wght' 700, 'GRAD' 100, 'ROND' 100"</item>
         <item name="fontVariationSettings">"'wdth' 112, 'wght' 700, 'GRAD' 100, 'ROND' 100"</item>
     </style>

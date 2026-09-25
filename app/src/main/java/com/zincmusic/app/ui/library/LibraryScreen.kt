@@ -986,6 +986,7 @@ private fun UnifiedLibraryContent(
 
         if (onlineSongs.isNotEmpty()) {
             list.add(object : UnifiedLibraryItem {
+                override val keyId = "liked-songs"
                 override val title = "Liked Songs"
                 override val thumbnailUrl = onlineSongs.firstOrNull()?.thumbnailUrl
                 override val subtitle = "Auto playlist • ${onlineSongs.size} songs"
@@ -1000,6 +1001,7 @@ private fun UnifiedLibraryContent(
 
         onlinePlaylists.forEach { playlist ->
             list.add(object : UnifiedLibraryItem {
+                override val keyId = "pl-${playlist.playlistId}"
                 override val title = playlist.title
                 override val thumbnailUrl = playlist.thumbnailUrl
                 override val subtitle = "Playlist" + (if (playlist.songCount?.isNotEmpty() == true) " • ${playlist.songCount}" else "")
@@ -1014,6 +1016,7 @@ private fun UnifiedLibraryContent(
 
         onlineAlbums.forEach { album ->
             list.add(object : UnifiedLibraryItem {
+                override val keyId = "al-${album.browseId}"
                 override val title = album.title
                 override val thumbnailUrl = album.thumbnailUrl
                 override val subtitle = "Album" + (if (album.artists.isNotEmpty()) " • ${album.artists.firstOrNull()?.name}" else "")
@@ -1028,6 +1031,7 @@ private fun UnifiedLibraryContent(
 
         onlineArtists.forEach { artist ->
             list.add(object : UnifiedLibraryItem {
+                override val keyId = "ar-${artist.browseId}"
                 override val title = artist.title
                 override val thumbnailUrl = artist.thumbnailUrl
                 override val subtitle = "Artist"
@@ -1042,6 +1046,7 @@ private fun UnifiedLibraryContent(
 
         onlinePodcasts.forEach { podcast ->
             list.add(object : UnifiedLibraryItem {
+                override val keyId = "pc-${podcast.playlistId}"
                 override val title = podcast.title
                 override val thumbnailUrl = podcast.thumbnailUrl
                 override val subtitle = "Podcast"
@@ -1072,7 +1077,7 @@ private fun UnifiedLibraryContent(
                 .fillMaxSize()
                 .nestedScroll(nestedScrollConnection)
         ) {
-            items(unifiedItems) { item ->
+            items(unifiedItems, key = { it.keyId }) { item ->
                 UnifiedLibraryCard(item)
             }
         }
@@ -1080,6 +1085,7 @@ private fun UnifiedLibraryContent(
 }
 
 private interface UnifiedLibraryItem {
+    val keyId: String
     val title: String
     val thumbnailUrl: String?
     val subtitle: String
@@ -1106,13 +1112,13 @@ private fun UnifiedLibraryCard(item: UnifiedLibraryItem) {
             contentAlignment = Alignment.Center
         ) {
             if (item.thumbnailUrl?.isNotEmpty() == true) {
-                androidx.compose.foundation.Image(
-                    painter = coil.compose.rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(item.thumbnailUrl)
-                            .crossfade(true)
-                            .build()
-                    ),
+                // AsyncImage resolves the exact cell size before decoding, so the
+                // bitmap is downsampled to cell resolution instead of full resolution.
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(item.thumbnailUrl)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -1271,7 +1277,7 @@ private fun PlaylistsTabContent(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(localPlaylists) { playlist ->
+                items(localPlaylists, key = { it.id }) { playlist ->
                     Column(
                         modifier = Modifier
                             .width(120.dp)
@@ -1339,7 +1345,7 @@ private fun PlaylistsTabContent(
                     .weight(1f)
                     .nestedScroll(nestedScrollConnection)
             ) {
-                items(onlinePlaylists) { playlist ->
+                items(onlinePlaylists, key = { it.playlistId }) { playlist ->
                     OnlinePlaylistCard(playlist, onClick = {
                         exploreViewModel?.cameFromLibrary = true
                         exploreViewModel?.loadPlaylist(playlist.playlistId)
@@ -1475,7 +1481,7 @@ private fun LocalPlaylistDetailsBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
-                    items(songs) { song ->
+                    items(songs, key = { it.id }) { song ->
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
@@ -1501,13 +1507,11 @@ private fun LocalPlaylistDetailsBottomSheet(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (song.thumbnailUrl?.isNotEmpty() == true) {
-                                        androidx.compose.foundation.Image(
-                                            painter = coil.compose.rememberAsyncImagePainter(
-                                                model = ImageRequest.Builder(LocalContext.current)
-                                                    .data(song.thumbnailUrl)
-                                                    .crossfade(true)
-                                                    .build()
-                                            ),
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(song.thumbnailUrl)
+                                                .crossfade(true)
+                                                .build(),
                                             contentDescription = null,
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
@@ -1700,7 +1704,7 @@ private fun PodcastsTabContent(nestedScrollConnection: androidx.compose.ui.input
                     .weight(1f)
                     .nestedScroll(nestedScrollConnection)
             ) {
-                items(onlinePodcasts) { podcast ->
+                items(onlinePodcasts, key = { it.playlistId }) { podcast ->
                     OnlinePlaylistCard(podcast, onClick = {
                         exploreViewModel?.cameFromLibrary = true
                         exploreViewModel?.loadPlaylist(podcast.playlistId)
@@ -1759,7 +1763,7 @@ private fun SongsTabContent(nestedScrollConnection: androidx.compose.ui.input.ne
                 contentPadding = PaddingValues(bottom = 160.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(onlineSongs) { song ->
+                items(onlineSongs, key = { it.videoId }) { song ->
                     ListItem(
                         headlineContent = { Text(song.title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = { Text(song.artist, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -1862,7 +1866,7 @@ private fun AlbumsTabContent(nestedScrollConnection: androidx.compose.ui.input.n
                     .weight(1f)
                     .nestedScroll(nestedScrollConnection)
             ) {
-                items(onlineAlbums) { album ->
+                items(onlineAlbums, key = { it.browseId }) { album ->
                     OnlineAlbumCard(album, onClick = {
                         exploreViewModel?.cameFromLibrary = true
                         exploreViewModel?.loadAlbum(album.browseId)
@@ -1993,7 +1997,7 @@ private fun ArtistsTabContent(nestedScrollConnection: androidx.compose.ui.input.
                     .weight(1f)
                     .nestedScroll(nestedScrollConnection)
             ) {
-                items(onlineArtists) { artist ->
+                items(onlineArtists, key = { it.browseId }) { artist ->
                     OnlineArtistCard(artist, onClick = {
                         exploreViewModel?.cameFromLibrary = true
                         exploreViewModel?.loadArtist(artist.browseId, artist.thumbnailUrl)
@@ -2464,7 +2468,7 @@ private fun RecapTabContent(
 
             // Remaining Top Songs (Ranked List)
             if (data.topSongs.size > 1) {
-                items(data.topSongs.drop(1)) { song ->
+                items(data.topSongs.drop(1), key = { it.id }) { song ->
                     ListItem(
                         headlineContent = { Text(song.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = { Text(song.artist, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -2544,7 +2548,7 @@ private fun RecapTabContent(
                         contentPadding = PaddingValues(horizontal = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(data.topArtists) { item ->
+                        items(data.topArtists, key = { it.artist }) { item ->
                             val imageUrl = viewModel.artistProfileMap[item.artist]
                             Column(
                                 modifier = Modifier

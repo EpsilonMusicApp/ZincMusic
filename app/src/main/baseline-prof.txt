@@ -1,0 +1,22 @@
+# Zinc Music baseline profile — speeds up startup and first scroll by
+# pre-compiling hot code paths (AOT) instead of JIT-ing them at runtime.
+# App startup & navigation
+HSPLcom/zincmusic/app/**;
+# Compose runtime + UI pipeline (used heavily during startup & scrolling)
+HSPLandroidx/compose/runtime/**;
+HSPLandroidx/compose/ui/**;
+HSPLandroidx/compose/foundation/**;
+HSPLandroidx/compose/animation/**;
+HSPLandroidx/compose/material3/**;
+HSPLandroidx/activity/compose/**;
+HSPLandroidx/lifecycle/runtime/compose/**;
+# Coil image pipeline (album art decoding during scroll)
+HSPLcoil/compose/**;
+HSPLcoil/request/**;
+HSPLcoil/decode/**;
+HSPLcoil/memory/**;
+HSPLcoil/map/**;
+# Kotlin stdlib hot paths
+HSPLkotlin/jvm/internal/**;
+HSPLkotlin/collections/**;
+HSPLkotlin/text/**;

@@ -69,6 +69,7 @@ dynamicanimation = { module = "androidx.dynamicanimation:dynamicanimation", vers
 
 # Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version = "1.4.1" }
 compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }

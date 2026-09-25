@@ -43,8 +43,7 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
                     .maxSizeBytes(250 * 1024 * 1024) // 250MB size quota for offline artwork persistent caching
                     .build()
             }
-            .crossfade(true)
-            .crossfade(300) // Expressive 300ms transition fade-in
+            .crossfade(180) // Light 180ms fade — expressive without adding scroll compositing cost
             .allowHardware(true) // Offload rendering directly to GPU hardware buffers for zero UI thread lag
             .allowRgb565(false) // Disable 16-bit compression to ensure pure ARGB_8888 color resolution on premium displays
             .diskCachePolicy(CachePolicy.ENABLED)
@@ -61,14 +60,9 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
         // Proactive Initialization: Connect localized persistence cache to high-speed networking engine
         InnerTubeClient.initialize(this)
 
-        // Warm up native FFmpeg binaries in background thread so playback can bind instantly later
-        Thread {
-            try {
-                com.arthenica.ffmpegkit.FFmpegKitConfig.ignoreSignal(com.arthenica.ffmpegkit.Signal.SIGXCPU)
-                com.arthenica.ffmpegkit.FFmpegKit.executeAsync("-version") { }
-            } catch (_: Exception) {
-            }
-        }.start()
+        // NOTE: FFmpeg native library now loads lazily on first playback instead of at
+        // launch — this keeps the critical startup window free of background CPU contention
+        // so the first frames and the very first scroll stay smooth.
         
         // Initialize global theme mode
         val prefs = getSharedPreferences("AppSettings", MODE_PRIVATE)
@@ -103,14 +97,12 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
             }
 
             try {
-                // 2. Initialize NewPipe Extractor and perform a dummy extraction to JIT-warm the JavaScript engine
+                // 2. Register the stream extractor (fast, purely local setup).
+                //    The heavy JavaScript engine now warms up lazily on the first
+                //    playback instead of fighting the UI thread during launch.
                 NewPipeStreamExtractor.init(this@ZincMusicApplication)
-                // A lightweight dummy request to trigger JS evaluation
-                // This is a known lightweight video ID just for warming the engine
-                NewPipeStreamExtractor.getStreamUrl("dQw4w9WgXcQ")
-                Log.d("ZincMusicApp", "Successfully JIT-warmed NewPipe JS Extractor engine")
             } catch (e: Exception) {
-                Log.w("ZincMusicApp", "Failed to warm up NewPipe Extractor: ${e.message}")
+                Log.w("ZincMusicApp", "Failed to init stream extractor: ${e.message}")
             }
         }
 

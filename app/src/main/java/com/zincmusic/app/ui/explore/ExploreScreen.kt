@@ -1496,7 +1496,7 @@ fun ExploreScreen(
                                             TextButton(onClick = onClearSearchHistory) { Text("Clear all") }
                                         }
                                     }
-                                    items(searchHistory) { historyItem ->
+                                    items(searchHistory, key = { it }) { historyItem ->
                                         ListItem(
                                             headlineContent = { Text(historyItem) },
                                             leadingContent = { Icon(Icons.Default.History, null) },
@@ -1573,7 +1573,7 @@ fun ExploreScreen(
                                     }
                                 }
                             } else {
-                                items(suggestions) { suggestion ->
+                                items(suggestions, key = { it }) { suggestion ->
                                     ListItem(
                                         headlineContent = { Text(suggestion) },
                                         leadingContent = { Icon(Icons.Default.Search, null) },
@@ -1596,7 +1596,7 @@ fun ExploreScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(homeMoods) { label ->
+                    items(homeMoods, key = { it }) { label ->
                         val selected = currentMood == label
                         FilterChip(
                             selected = selected,
@@ -1639,7 +1639,7 @@ fun ExploreScreen(
                         SearchFilter.ARTISTS to "Artists",
                         SearchFilter.PLAYLISTS to "Playlists"
                     )
-                    items(filters) { (filter, label) ->
+                    items(filters, key = { it.first }) { (filter, label) ->
                         val selected = currentFilter == filter
                         FilterChip(
                             selected = selected,
