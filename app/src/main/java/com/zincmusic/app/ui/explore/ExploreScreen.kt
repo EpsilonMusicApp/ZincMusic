@@ -1639,7 +1639,7 @@ fun ExploreScreen(
                         SearchFilter.ARTISTS to "Artists",
                         SearchFilter.PLAYLISTS to "Playlists"
                     )
-                    items(filters, key = { it.first }) { (filter, label) ->
+                    items(filters, key = { it.second }) { (filter, label) ->
                         val selected = currentFilter == filter
                         FilterChip(
                             selected = selected,

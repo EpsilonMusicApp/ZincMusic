@@ -2468,7 +2468,7 @@ private fun RecapTabContent(
 
             // Remaining Top Songs (Ranked List)
             if (data.topSongs.size > 1) {
-                items(data.topSongs.drop(1), key = { it.id }) { song ->
+                items(data.topSongs.drop(1), key = { it.songId }) { song ->
                     ListItem(
                         headlineContent = { Text(song.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         supportingContent = { Text(song.artist, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) },

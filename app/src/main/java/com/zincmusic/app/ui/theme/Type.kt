@@ -21,22 +21,22 @@ val ZincTypeface = FontFamily(
     Font(
         resId = R.font.zinc_typeface,
         weight = FontWeight.Normal,
-        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Normal))
+        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Normal.weight))
     ),
     Font(
         resId = R.font.zinc_typeface,
         weight = FontWeight.Medium,
-        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Medium))
+        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Medium.weight))
     ),
     Font(
         resId = R.font.zinc_typeface,
         weight = FontWeight.SemiBold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.SemiBold))
+        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.SemiBold.weight))
     ),
     Font(
         resId = R.font.zinc_typeface,
         weight = FontWeight.Bold,
-        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Bold))
+        variationSettings = FontVariation.Settings(FontVariation.weight(FontWeight.Bold.weight))
     )
 )
 
