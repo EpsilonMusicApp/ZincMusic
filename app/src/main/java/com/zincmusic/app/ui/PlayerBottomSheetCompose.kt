@@ -162,6 +162,14 @@ private fun Dp.nonNegative(): Dp = takeIf { it.value.isFinite() && it.value > 0f
 // ==========================================
 val MiniPlayerHeight = 64.dp // Compact capsule (v1.1.3): slimmer mini player
 
+// Collapsed mini player art-slot geometry. These MUST mirror the layout built inside
+// MiniPlayerContentInternal: an 8.dp row padding + a 40.dp placeholder centered inside
+// a 48.dp art Box -> the slot's top-left sits 12.dp from the capsule's top-left edge.
+// The floating shared artwork layer reads these so the album cover always lands exactly
+// on its reserved slot (fixes the v1.1.3 displaced-cover regression).
+val MiniPlayerArtSlotSize = 40.dp
+val MiniPlayerArtSlotInset = 12.dp
+
 data class SheetVisualState(
     val currentBottomPadding: Dp,
     val playerContentAreaHeightPxProvider: () -> Float,
@@ -1115,18 +1123,18 @@ fun PlayerBottomSheetCompose(
                                 val t = playerContentExpansionFraction.value
                                 val lyricsT = lyricsArtworkProgress
 
-                                val miniSizePx = 48.dp.toPx()
+                                val miniSizePx = MiniPlayerArtSlotSize.toPx()
                                 val fullSizePx = albumArtSizeDp.toPx()
                                 val normalScale = androidx.compose.ui.util.lerp(miniSizePx / fullSizePx, 1f, t)
 
                                 // Account for the horizontal padding applied in the parent layout block
                                 val startPaddingPx = sheetVisualState.currentHorizontalPaddingStartPxProvider()
 
-                                // Position relative to the Surface top-left
-                                val xStartPx = startPaddingPx + 16.dp.toPx()
+                                // Position relative to the Surface top-left (matches MiniPlayerArtSlotInset)
+                                val xStartPx = startPaddingPx + MiniPlayerArtSlotInset.toPx()
                                 val xEndPx = (with(density) { screenWidth.dp.toPx() } - fullSizePx) / 2f
 
-                                val yStartPx = 16.dp.toPx()
+                                val yStartPx = MiniPlayerArtSlotInset.toPx()
                                 val minTopOffsetDp = with(density) { statusBarTopPx.toDp() } + 68.dp // Removed 16.dp extra gap
                                 val topOffsetDp = ((containerHeight - albumArtSizeDp) / 2f - 220.dp).coerceAtLeast(minTopOffsetDp)
                                 val yEndPx = with(density) { topOffsetDp.toPx() }
@@ -1351,7 +1359,7 @@ private fun MiniPlayerContentInternal(
                 )
             }
 
-            Box(modifier = Modifier.size(40.dp)) {
+            Box(modifier = Modifier.size(MiniPlayerArtSlotSize)) {
                 // Placeholder Box for structure: AsyncImage is managed globally via parent's floating shared element!
             }
         }
