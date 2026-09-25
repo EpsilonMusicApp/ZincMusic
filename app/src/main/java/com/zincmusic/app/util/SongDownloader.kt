@@ -240,7 +240,7 @@ object SongDownloader {
     private fun updateNotification(context: Context, title: String, progress: Int, notificationId: Int) {
         createNotificationChannel(context)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(com.zincmusic.app.R.drawable.ic_music_note)
+            .setSmallIcon(com.zincmusic.app.R.drawable.ic_notification)
             .setContentTitle("Downloading Track")
             .setContentText("$title ($progress%)")
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -255,7 +255,7 @@ object SongDownloader {
     private fun showFinishedNotification(context: Context, title: String, artist: String, notificationId: Int) {
         createNotificationChannel(context)
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(com.zincmusic.app.R.drawable.ic_music_note)
+            .setSmallIcon(com.zincmusic.app.R.drawable.ic_notification)
             .setContentTitle("Download Complete")
             .setContentText("$title — $artist")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

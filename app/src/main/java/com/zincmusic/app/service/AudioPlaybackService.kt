@@ -1874,7 +1874,7 @@ class AudioPlaybackService : MediaSessionService() {
             Log.d(TAG, "Notification update: isPlaying=$isPlaying, song=$currentSongName")
             
             // Explicitly set channel and properties to match Java example exactly
-            notificationBuilder.setSmallIcon(R.drawable.ic_music_note)
+            notificationBuilder.setSmallIcon(R.drawable.ic_notification)
             notificationBuilder.setContentTitle(currentSongName)
             notificationBuilder.setContentText(if (is8DEnabled) "🎧 8D Audio" else "Normal Playback")
             notificationBuilder.setSubText("Zinc Music")
