@@ -19,6 +19,9 @@ plugins {
 if (project.file('google-services.json').exists()) {
     apply plugin: 'com.google.gms.google-services'
     apply plugin: 'com.google.firebase.crashlytics'
+    // TEST-BRANCH-ONLY: this branch carries a synthetic google-services.json purely to
+    // verify plugin compatibility with AGP 9.1 — skip mapping upload to the fake app.
+    crashlytics { mappingFileUploadEnabled = false }
     logger.lifecycle('Zinc Music: google-services.json found -> Firebase Analytics, Crashlytics and Messaging ENABLED.')
 } else {
     logger.lifecycle('Zinc Music: app/google-services.json not found -> Firebase plugins skipped (dormant build).')
