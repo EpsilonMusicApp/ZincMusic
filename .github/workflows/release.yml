@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up signing keystore
+        run: |
+          mkdir -p $HOME/keystores
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Using keystore from repository secrets"
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > $HOME/keystores/zincmusic.jks
+            echo "ANDROID_KEYSTORE_PATH=$HOME/keystores/zincmusic.jks" >> $GITHUB_ENV
+            echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+            echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "ANDROID_KEY_ALIAS_PASSWORD=${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}" >> $GITHUB_ENV
+          else
+            echo "No keystore secret found - generating temporary keystore"
+            keytool -genkeypair \
+              -keystore $HOME/keystores/zincmusic.jks \
+              -storepass zincmusic -keypass zincmusic \
+              -alias zinc -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Zinc Music, OU=Zinc Music, O=EpsilonMusic, C=IN"
+            echo "ANDROID_KEYSTORE_PATH=$HOME/keystores/zincmusic.jks" >> $GITHUB_ENV
+            echo "ANDROID_KEYSTORE_PASSWORD=zincmusic" >> $GITHUB_ENV
+            echo "ANDROID_KEY_ALIAS=zinc" >> $GITHUB_ENV
+            echo "ANDROID_KEY_ALIAS_PASSWORD=zincmusic" >> $GITHUB_ENV
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Prepare artifacts
+        run: |
+          cd app/build/outputs/apk/release
+          TAG="${GITHUB_REF_NAME}"
+          if [[ "$TAG" != v* ]]; then TAG="release"; fi
+          cp app-release.apk "ZincMusic-${TAG}.apk"
+          sha256sum "ZincMusic-${TAG}.apk" > checksums.txt
+          echo "APK_NAME=ZincMusic-${TAG}.apk" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            app/build/outputs/apk/release/${{ env.APK_NAME }}
+            app/build/outputs/apk/release/checksums.txt
+          body: |
+            # Zinc Music
+            
+            A modern, unified Android music player with local playback, online streaming,
+            synchronized lyrics and a Material 3 Expressive interface.
+            
+            ## Highlights
+            
+            * Hybrid playback: local library + online streaming in one queue
+            * Material 3 Expressive UI with dynamic color theming
+            * Synchronized lyrics with word-by-word karaoke
+            * Real-time volume normalization (LUFS) and crossfade
+            * Built-in equalizer, bass boost and effects
+            * One-click downloads for offline listening
+            * Music haptics and listening recap
+            * Home screen widgets
+            
+            **How to install:** download the APK below, open it on your Android device
+            (Android 7.1+) and allow installation from unknown sources when prompted.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
