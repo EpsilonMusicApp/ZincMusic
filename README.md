@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/zinc_music_logo.png" width="160" alt="Zinc Music Logo" />
+  <img src="docs/zinc_music_logo.png" width="190" alt="Zinc Music Logo" />
 </p>
 
 <h1 align="center">Zinc Music</h1>
