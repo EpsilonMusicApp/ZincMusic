@@ -51,8 +51,8 @@ android {
         applicationId "com.zincmusic.app"
         minSdk 25
         targetSdk 37
-        versionCode 6
-        versionName "1.1.4"
+        versionCode 7
+        versionName "1.1.5"
         ndk {
             // Modern devices are arm64; shipping one ABI keeps the APK
             // small and light (Epsilon-Music-style build policy).

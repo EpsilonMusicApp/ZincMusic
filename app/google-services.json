@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475226809783",
+    "project_id": "zinc-music",
+    "storage_bucket": "zinc-music.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475226809783:android:14191c9712fe21fd963432",
+        "android_client_info": {
+          "package_name": "com.zincmusic.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBb5VBAm0HatpPE_gcd227VBWU4WGCHu4w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
