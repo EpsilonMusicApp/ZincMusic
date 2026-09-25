@@ -104,7 +104,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bumptech.glide.Glide
 import com.zincmusic.app.R
 import com.zincmusic.app.model.SongItem
-import com.zincmusic.app.ui.theme.ZincTypeface
 import com.zincmusic.app.ui.theme.ZincMusicTheme
 import com.zincmusic.app.viewmodel.PlayerSharedViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -403,7 +402,7 @@ fun DestructiveActionRow(
         ) {
             Icon(Icons.Default.PlaylistAdd, null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
             Spacer(Modifier.width(8.dp))
-            Text("Add to Playlist", style = MaterialTheme.typography.labelLarge, fontFamily = ZincTypeface, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            Text("Add to Playlist", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
 
         // Delete Button
@@ -422,7 +421,7 @@ fun DestructiveActionRow(
         ) {
             Icon(Icons.Filled.DeleteOutline, null, tint = MaterialTheme.colorScheme.onErrorContainer)
             Spacer(Modifier.width(8.dp))
-            Text("Delete", style = MaterialTheme.typography.labelLarge, fontFamily = ZincTypeface, color = MaterialTheme.colorScheme.onErrorContainer)
+            Text("Delete", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onErrorContainer)
         }
     }
 }
@@ -593,7 +592,6 @@ fun HeaderSection(
                 Text(
                     song?.title ?: "Unknown",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontFamily = ZincTypeface,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -601,7 +599,6 @@ fun HeaderSection(
                 Text(
                     song?.artist ?: "Unknown Artist",
                     style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = ZincTypeface,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -657,7 +654,6 @@ fun HeaderSection(
             Text(
                 song?.title ?: "Unknown",
                 style = MaterialTheme.typography.titleMedium,
-                fontFamily = ZincTypeface,
                 fontWeight = FontWeight.ExtraBold,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -667,7 +663,6 @@ fun HeaderSection(
             Text(
                 song?.artist ?: "Unknown Artist",
                 style = MaterialTheme.typography.bodySmall,
-                fontFamily = ZincTypeface,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -735,7 +730,7 @@ fun ActionButtonRow1(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.PlayArrow, null, modifier = Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Play", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 20.sp, fontWeight = FontWeight.Medium, fontFamily = ZincTypeface)
+                Text("Play", color = MaterialTheme.colorScheme.onPrimaryContainer, fontSize = 20.sp, fontWeight = FontWeight.Medium)
             }
         }
 
@@ -838,7 +833,6 @@ fun ActionButtonRow2(
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = ZincTypeface
                 )
             }
         }
@@ -885,7 +879,6 @@ fun ActionButtonRow2(
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = ZincTypeface
                 )
             }
         }
@@ -935,7 +928,6 @@ fun ActionButtonRow2(
                     text = if (isOnline) "Download" else "Offline",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    fontFamily = ZincTypeface
                 )
             }
         }
@@ -989,7 +981,6 @@ fun ExpressiveTabSwitcher(selectedTab: BottomSheetTab, onTabSelected: (BottomShe
                         color = if (selectedTab == BottomSheetTab.OPTIONS) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = ZincTypeface
                     )
                 }
             }
@@ -1014,7 +1005,6 @@ fun ExpressiveTabSwitcher(selectedTab: BottomSheetTab, onTabSelected: (BottomShe
                         color = if (selectedTab == BottomSheetTab.INFO) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = ZincTypeface
                     )
                 }
             }
@@ -1080,7 +1070,6 @@ fun InfoRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
-                fontFamily = ZincTypeface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
@@ -1090,7 +1079,6 @@ fun InfoRow(
                 fontWeight = FontWeight.Normal,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                fontFamily = ZincTypeface
             )
         }
     }

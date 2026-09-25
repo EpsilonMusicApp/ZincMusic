@@ -280,6 +280,7 @@ package com.zincmusic.app.ui.onboarding
         imageUrl: String? = null,
         imageScale: Float = 1f,
         iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
+        tintIcon: Boolean = true,
         content: @Composable () -> Unit
     ) {
         val configuration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -317,7 +318,7 @@ package com.zincmusic.app.ui.onboarding
                         painter = painterResource(id = drawableRes),
                         contentDescription = "Background decoration",
                         contentScale = ContentScale.Fit,
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(iconTint),
+                        colorFilter = if (tintIcon) androidx.compose.ui.graphics.ColorFilter.tint(iconTint) else null,
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(20.dp))
@@ -346,7 +347,8 @@ package com.zincmusic.app.ui.onboarding
         ImmersivePageLayout(
             pageOffsetProvider = pageOffsetProvider,
             drawableRes = R.drawable.ic_applogo,
-            iconTint = MaterialTheme.colorScheme.onSurface
+            iconTint = MaterialTheme.colorScheme.onSurface,
+            tintIcon = false
         ) {
             Text(
                 text = "Welcome\nto Zinc Music.",
@@ -1126,7 +1128,8 @@ package com.zincmusic.app.ui.onboarding
             pageOffsetProvider = pageOffsetProvider,
             drawableRes = if (isLoggedIn && userProfileUrl != null) null else R.drawable.ic_applogo,
             imageUrl = if (isLoggedIn) userProfileUrl else null,
-            iconTint = MaterialTheme.colorScheme.onSurface
+            iconTint = MaterialTheme.colorScheme.onSurface,
+            tintIcon = false
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),

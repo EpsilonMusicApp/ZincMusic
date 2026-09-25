@@ -74,7 +74,6 @@ import com.zincmusic.app.data.lyrics.LyricLine
 import com.zincmusic.app.data.lyrics.LyricWord
 import com.zincmusic.app.data.lyrics.LyricsResult
 import com.zincmusic.app.model.SongItem
-import com.zincmusic.app.ui.theme.ZincTypeface
 
 // ════════════════════════════════════════════════════════════════════════════════
 // ─ Data Classes & Constants
@@ -383,7 +382,6 @@ private fun LyricLineItem(
         }
 
     val mainTextStyle = MaterialTheme.typography.headlineMedium.copy(
-        fontFamily = ZincTypeface,
         fontSize = 38.sp,
         fontWeight = FontWeight.Bold,
         lineHeight = 50.sp,
@@ -391,7 +389,6 @@ private fun LyricLineItem(
     )
 
     val bracketTextStyle = MaterialTheme.typography.bodyLarge.copy(
-        fontFamily = ZincTypeface,
         fontSize = 20.sp,
         fontWeight = FontWeight.Medium,
         lineHeight = 28.sp,

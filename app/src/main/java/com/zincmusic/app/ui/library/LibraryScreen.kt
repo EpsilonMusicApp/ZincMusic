@@ -258,13 +258,7 @@ fun LibraryScreen(
                 available: androidx.compose.ui.geometry.Offset,
                 source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
             ): androidx.compose.ui.geometry.Offset {
-                if (mainActivity != null) {
-                    if (consumed.y < -10f) {
-                        mainActivity.hideBottomNavWithAnimation()
-                    } else if (consumed.y > 10f) {
-                        mainActivity.showBottomNavWithAnimation()
-                    }
-                }
+                // v1.1.3: bottom nav stays fixed — no hide-on-scroll
                 return super.onPostScroll(consumed, available, source)
             }
         }

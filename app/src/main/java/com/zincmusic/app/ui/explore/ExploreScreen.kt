@@ -323,10 +323,7 @@ fun ExploreScreen(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (!isLandscape && mainActivity != null) {
-                    if (consumed.y < -10f) mainActivity.hideBottomNavWithAnimation()
-                    else if (consumed.y > 10f) mainActivity.showBottomNavWithAnimation()
-                }
+                // v1.1.3: bottom nav stays fixed — no hide-on-scroll
                 return super.onPostScroll(consumed, available, source)
             }
         }

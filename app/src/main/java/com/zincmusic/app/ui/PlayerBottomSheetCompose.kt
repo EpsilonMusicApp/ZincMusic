@@ -160,7 +160,7 @@ private fun Dp.nonNegative(): Dp = takeIf { it.value.isFinite() && it.value > 0f
 // ==========================================
 // 3. STEP 3: DRAW-PHASE & LAYOUT-PHASE PROVIDERS
 // ==========================================
-val MiniPlayerHeight = 80.dp // High-fidelity capsule height matching controls breathing room
+val MiniPlayerHeight = 64.dp // Compact capsule (v1.1.3): slimmer mini player
 
 data class SheetVisualState(
     val currentBottomPadding: Dp,
@@ -223,7 +223,7 @@ fun rememberSheetVisualState(
     val overallSheetTopCornerRadiusProvider: () -> Dp = remember(showPlayerContentArea, playerContentExpansionFraction, navBarCornerRadiusDp, isNavBarHiddenProvider) {
         {
             if (showPlayerContentArea) {
-                val collapsedCornerTarget = 40.dp // Perfect capsule: half of 80.dp height
+                val collapsedCornerTarget = 32.dp // Perfect capsule: half of 64.dp height
                 val fraction = playerContentExpansionFraction.value
                 lerp(collapsedCornerTarget, 0.dp, fraction)
             } else {
@@ -236,7 +236,7 @@ fun rememberSheetVisualState(
     val playerContentActualBottomRadiusProvider: () -> Dp = remember(showPlayerContentArea, playerContentExpansionFraction, isNavBarHiddenProvider, navBarCornerRadiusDp) {
         {
             val fraction = playerContentExpansionFraction.value
-            val collapsedRadius = 40.dp // Perfect capsule: half of 80.dp height
+            val collapsedRadius = 32.dp // Perfect capsule: half of 64.dp height
             
             // Morphs outward to 26.dp in first 20% drag to form curved floating card, then goes flat
             if (fraction < 0.2f) {
@@ -829,14 +829,14 @@ fun PlayerBottomSheetCompose(
                 val bottomNavHeightPx = if (dynamicBottomNavHeightState.value > 0f) {
                     dynamicBottomNavHeightState.value
                 } else {
-                    with(density) { 75.dp.toPx() }
+                    with(density) { 70.dp.toPx() }
                 }
                 val miniPlayerHeightPx = with(density) { MiniPlayerHeight.toPx() }
                 
                 // Dynamically adjust gap: 12dp when BottomNav is visible, 8dp when hidden
                 val bottomNavVisibilityFraction = (bottomNavTranslationYState.value / (if (bottomNavHeightPx > 0) bottomNavHeightPx else 1f)).coerceIn(0f, 1f)
                 val currentBottomGapPx = with(density) { 
-                    lerp(12.dp, 8.dp, bottomNavVisibilityFraction).toPx() 
+                    lerp(10.dp, 6.dp, bottomNavVisibilityFraction).toPx() 
                 }
                 
                 // Ensure the mini player stops at the bottom margin and doesn't follow the nav bar into the abyss
@@ -915,9 +915,9 @@ fun PlayerBottomSheetCompose(
             val expectedBottomNavHeight = if (dynamicBottomNavHeightState.value > 0f) {
                 dynamicBottomNavHeightState.value
             } else {
-                with(density) { 75.dp.toPx() }
+                with(density) { 70.dp.toPx() }
             }
-            val expectedBottomGapPx = with(density) { 12.dp.toPx() }
+            val expectedBottomGapPx = with(density) { 10.dp.toPx() }
             val miniPlayerHeightPx = with(density) { MiniPlayerHeight.toPx() }
             val destY = if (targetExpanded) {
                 0f
@@ -1200,11 +1200,11 @@ fun PlayerBottomSheetCompose(
                         val bottomNavHeightPx = if (dynamicBottomNavHeightState.value > 0f) {
                             dynamicBottomNavHeightState.value
                         } else {
-                            with(density) { 75.dp.toPx() }
+                            with(density) { 70.dp.toPx() }
                         }
                         val bottomNavVisibilityFraction = (bottomNavTranslationYState.value / (if (bottomNavHeightPx > 0) bottomNavHeightPx else 1f)).coerceIn(0f, 1f)
                         val currentBottomGapPx = with(density) { 
-                            androidx.compose.ui.unit.lerp(12.dp, 8.dp, bottomNavVisibilityFraction).toPx() 
+                            androidx.compose.ui.unit.lerp(10.dp, 6.dp, bottomNavVisibilityFraction).toPx() 
                         }
                         
                         val effectiveBottomNavHeight = (bottomNavHeightPx - bottomNavTranslationYState.value).coerceAtLeast(0f)
@@ -1286,12 +1286,12 @@ private fun MiniPlayerContentInternal(
         modifier = modifier
             .fillMaxSize()
             .clickable(onClick = onClick)
-            .padding(start = 10.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+            .padding(start = 8.dp, end = 6.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Morphing Art Space
         Box(
-            modifier = Modifier.size(60.dp),
+            modifier = Modifier.size(48.dp),
             contentAlignment = Alignment.Center
         ) {
             val currentPosition by viewModel.currentPosition.collectAsStateWithLifecycle()
@@ -1319,44 +1319,44 @@ private fun MiniPlayerContentInternal(
 
             if (isProcessing) {
                 CircularWavyProgressIndicator(
-                    modifier = Modifier.size(58.dp),
+                    modifier = Modifier.size(46.dp),
                     color = accentColor,
                     trackColor = accentColor.copy(alpha = 0.25f),
                     amplitude = amplitudeAnimatable.value,
                     stroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = with(LocalDensity.current) { 6.dp.toPx() },
+                        width = with(LocalDensity.current) { 5.dp.toPx() },
                         cap = androidx.compose.ui.graphics.StrokeCap.Round
                     ),
                     trackStroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = with(LocalDensity.current) { 6.dp.toPx() },
+                        width = with(LocalDensity.current) { 5.dp.toPx() },
                         cap = androidx.compose.ui.graphics.StrokeCap.Round
                     )
                 )
             } else {
                 CircularWavyProgressIndicator(
                     progress = { progressAnimatable.value },
-                    modifier = Modifier.size(58.dp),
+                    modifier = Modifier.size(46.dp),
                     color = accentColor,
                     trackColor = accentColor.copy(alpha = 0.25f),
                     waveSpeed = WavyProgressIndicatorDefaults.CircularWavelength * 0.4f,
                     amplitude = { amplitudeAnimatable.value },
                     stroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = with(LocalDensity.current) { 6.dp.toPx() },
+                        width = with(LocalDensity.current) { 5.dp.toPx() },
                         cap = androidx.compose.ui.graphics.StrokeCap.Round
                     ),
                     trackStroke = androidx.compose.ui.graphics.drawscope.Stroke(
-                        width = with(LocalDensity.current) { 6.dp.toPx() },
+                        width = with(LocalDensity.current) { 5.dp.toPx() },
                         cap = androidx.compose.ui.graphics.StrokeCap.Round
                     )
                 )
             }
 
-            Box(modifier = Modifier.size(48.dp)) {
+            Box(modifier = Modifier.size(40.dp)) {
                 // Placeholder Box for structure: AsyncImage is managed globally via parent's floating shared element!
             }
         }
 
-        Spacer(modifier = Modifier.width(20.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
         // Song Info
         Column(modifier = Modifier.weight(1f)) {
@@ -1387,7 +1387,7 @@ private fun MiniPlayerContentInternal(
                     painter = painterResource(R.drawable.ic_skip_previous),
                     contentDescription = "Previous",
                     tint = contentColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -1396,14 +1396,14 @@ private fun MiniPlayerContentInternal(
                     if (isPlaying) viewModel.pauseAudio() else viewModel.playAudio()
                 },
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(36.dp)
                     .background(playBgColor, CircleShape)
             ) {
                 Icon(
                     painter = painterResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play),
                     contentDescription = "Play/Pause",
                     tint = contentColor,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
 
@@ -1412,7 +1412,7 @@ private fun MiniPlayerContentInternal(
                     painter = painterResource(R.drawable.ic_skip_next),
                     contentDescription = "Next",
                     tint = contentColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }

@@ -16,6 +16,7 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
+import androidx.compose.foundation.Image
 import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
@@ -1046,11 +1047,7 @@ private fun SettingsMainScreen(navController: androidx.navigation.NavController)
             override fun onPostScroll(
                 consumed: Offset, available: Offset, source: NestedScrollSource
             ): Offset {
-                if (!isLandscape && mainActivity != null) {
-                    val delta = consumed.y
-                    if (delta < -30f) mainActivity.hideBottomNavWithAnimation()
-                    else if (delta > 30f) mainActivity.showBottomNavWithAnimation()
-                }
+                // v1.1.3: bottom nav stays fixed — no hide-on-scroll
                 return super.onPostScroll(consumed, available, source)
             }
         }
@@ -2230,10 +2227,9 @@ private fun AboutScreen(
                     .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
+                Image(
                     painter = painterResource(R.drawable.ic_applogo),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(72.dp)
                 )
             }
@@ -2991,10 +2987,9 @@ private fun AppLogoSection(isLandscape: Boolean) {
             .padding(top = if (isLandscape) 8.dp else 16.dp, bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
+        Image(
             painter = painterResource(R.drawable.ic_applogo),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(iconSize)
         )
         Text(

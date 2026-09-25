@@ -257,7 +257,7 @@ fun EffectsScreen(
     
     val isInteractionEnabled = !isProcessing
 
-    // Scroll-aware Bottom Nav hiding logic
+    // Bottom-nav scroll connection kept for structure; nav stays fixed (v1.1.3)
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -265,15 +265,7 @@ fun EffectsScreen(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                // Same logic as PlayerFragment: dy > 10 hides, dy < -10 shows (Portrait only)
-                if (!isLandscape && mainActivity != null) {
-                    val delta = consumed.y
-                    if (delta < -10f) {
-                        mainActivity.hideBottomNavWithAnimation()
-                    } else if (delta > 10f) {
-                        mainActivity.showBottomNavWithAnimation()
-                    }
-                }
+                // v1.1.3: bottom nav stays fixed — no hide-on-scroll
                 return super.onPostScroll(consumed, available, source)
             }
         }

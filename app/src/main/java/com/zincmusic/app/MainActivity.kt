@@ -199,7 +199,7 @@ class MainActivity : AppCompatActivity() {
 
                         val density = LocalDensity.current
                         val navigationBarsHeightPx = WindowInsets.navigationBars.getBottom(density).toFloat()
-                        val bottomNavHeight = 80.dp
+                        val bottomNavHeight = 70.dp
                         val bottomNavHeightPx = with(density) { bottomNavHeight.toPx() }
                         val totalSlideDistPx = bottomNavHeightPx + navigationBarsHeightPx
 
@@ -228,8 +228,8 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        val navBarHeight by animateDpAsState(if (dynamicNavStyle) 64.dp else 80.dp, label = "navBarHeight")
-                        val navIconSize by animateDpAsState(if (dynamicNavStyle) 34.dp else 26.dp, label = "navIconSize")
+                        val navBarHeight by animateDpAsState(if (dynamicNavStyle) 64.dp else 70.dp, label = "navBarHeight")
+                        val navIconSize by animateDpAsState(if (dynamicNavStyle) 34.dp else 24.dp, label = "navIconSize")
                         val navElevation by animateDpAsState(if (dynamicNavStyle) 8.dp else 3.dp, label = "navElevation")
                         val bottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
 
