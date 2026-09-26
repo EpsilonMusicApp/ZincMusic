@@ -183,17 +183,12 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
         try {
             if (FirebaseApp.getApps(this).isNotEmpty()) {
                 FirebaseMessaging.getInstance().subscribeToTopic("all")
-                // Fetch the current registration token so it is available in
-                // Settings → Notifications for Firebase Console test messages
-                // (Engage → Messaging → Send test message) right after install.
-                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        PushDiagnostics.storeToken(this, task.result)
-                        Log.d(TAG, "FCM registration token ready for test sends")
-                    } else {
-                        Log.w(TAG, "FCM registration token fetch failed: ${task.exception?.message}")
-                    }
-                }
+                // Actively fetch the Installation ID and the registration token
+                // so both are available in Settings → Notifications for Firebase
+                // Console test messages right after install — instead of only
+                // waiting for the passive onRegistered/onNewToken callbacks,
+                // which never fire when the device registration stalls.
+                PushDiagnostics.fetch(this)
                 Log.i(TAG, "Firebase ready: analytics, crashlytics and topic 'all' subscribed")
             } else {
                 Log.i(TAG, "Firebase config not present (no google-services.json) - telemetry dormant")

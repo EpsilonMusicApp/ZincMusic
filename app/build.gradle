@@ -51,8 +51,8 @@ android {
         applicationId "com.zincmusic.app"
         minSdk 25
         targetSdk 37
-        versionCode 8
-        versionName "1.1.6"
+        versionCode 9
+        versionName "1.1.7"
         ndk {
             // Modern devices are arm64; shipping one ABI keeps the APK
             // small and light (Epsilon-Music-style build policy).
@@ -186,6 +186,7 @@ dependencies {
     implementation libs.firebase.analytics
     implementation libs.firebase.crashlytics
     implementation libs.firebase.messaging
+    implementation libs.firebase.installations
 
     // Liquid Glass Effect
     implementation libs.liquid

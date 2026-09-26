@@ -156,6 +156,7 @@ import com.zincmusic.app.viewmodel.PlayerSharedViewModel
 import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -164,6 +165,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URLEncoder
+import java.security.MessageDigest
 import java.text.DecimalFormat
 import kotlin.math.log10
 import kotlin.math.pow
@@ -2248,6 +2250,44 @@ private fun NotificationsScreen(navController: androidx.navigation.NavController
     val firebaseConfigured = remember { FirebaseApp.getApps(context).isNotEmpty() }
     var token by remember { mutableStateOf(PushDiagnostics.getToken(context)) }
     var installationId by remember { mutableStateOf(PushDiagnostics.getInstallationId(context)) }
+    var tokenError by remember { mutableStateOf(PushDiagnostics.getTokenError(context)) }
+    var fidError by remember { mutableStateOf(PushDiagnostics.getInstallationIdError(context)) }
+    var fetching by remember { mutableStateOf(PushDiagnostics.fetchInFlight) }
+    val signingSha1 = remember { signingCertSha1(context) }
+
+    // Actively fetch missing identifiers the moment this screen opens. v1.1.6
+    // only waited passively for Firebase's registration callbacks — when a
+    // device's registration stalls those callbacks never fire and the rows sat
+    // on "registering… / fetching…" forever.
+    LaunchedEffect(firebaseConfigured) {
+        if (firebaseConfigured && (token == null || installationId == null)) {
+            PushDiagnostics.fetch(context)
+        }
+    }
+
+    // Live-poll the persisted values while the screen is open so results and
+    // failure reasons appear the moment a fetch resolves, with a capped number
+    // of automatic retries in case registration is merely slow.
+    LaunchedEffect(firebaseConfigured) {
+        if (!firebaseConfigured) return@LaunchedEffect
+        var retries = 0
+        var ticksSinceFetch = 0
+        while (isActive) {
+            delay(1500)
+            token = PushDiagnostics.getToken(context)
+            installationId = PushDiagnostics.getInstallationId(context)
+            tokenError = PushDiagnostics.getTokenError(context)
+            fidError = PushDiagnostics.getInstallationIdError(context)
+            fetching = PushDiagnostics.fetchInFlight
+            ticksSinceFetch++
+            val missing = token == null || installationId == null
+            if (missing && !fetching && ticksSinceFetch >= 10 && retries < 3) {
+                ticksSinceFetch = 0
+                retries++
+                PushDiagnostics.fetch(context)
+            }
+        }
+    }
 
     Scaffold(
         topBar = { SettingsDetailTopBar("Notifications") { navController.popBackStack() } }
@@ -2397,27 +2437,54 @@ private fun NotificationsScreen(navController: androidx.navigation.NavController
                         )
                         DiagnosticsRow(
                             label = "Installation ID",
-                            value = installationId ?: "registering…",
+                            value = installationId
+                                ?: if (fidError != null) "unavailable" else "registering…",
                             copyable = installationId != null,
                             onCopy = { installationId?.let { context.copyToClipboard("Installation ID", it) } }
                         )
+                        fidError?.let { ErrorLine(it) }
                         DiagnosticsRow(
                             label = "Registration token",
                             value = token?.take(48)?.plus(if ((token?.length ?: 0) > 48) "…" else "")
-                                ?: "fetching…",
+                                ?: if (tokenError != null) "unavailable" else "fetching…",
                             copyable = token != null,
                             onCopy = { token?.let { context.copyToClipboard("Registration token", it) } }
                         )
-                        if (token == null || installationId == null) {
-                            Spacer(Modifier.height(6.dp))
-                            TextButton(onClick = {
-                                token = PushDiagnostics.getToken(context)
-                                installationId = PushDiagnostics.getInstallationId(context)
-                            }) {
-                                Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Refresh")
+                        tokenError?.let { ErrorLine(it) }
+                        DiagnosticsRow(
+                            label = "Signing SHA-1",
+                            value = signingSha1 ?: "unknown",
+                            copyable = signingSha1 != null,
+                            onCopy = { signingSha1?.let { context.copyToClipboard("Signing SHA-1", it) } }
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "If the identifiers above keep failing to appear, copy this " +
+                                "SHA-1 fingerprint and add it under Firebase Console → Project " +
+                                "settings → Your apps → Add fingerprint, then press Refresh.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        TextButton(
+                            enabled = !fetching,
+                            onClick = {
+                                PushDiagnostics.fetch(context)
+                                fetching = PushDiagnostics.fetchInFlight
+                                tokenError = PushDiagnostics.getTokenError(context)
+                                fidError = PushDiagnostics.getInstallationIdError(context)
                             }
+                        ) {
+                            if (fetching) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            Text(if (fetching) "Fetching…" else "Refresh")
                         }
                     }
                 }
@@ -2496,6 +2563,47 @@ private fun Context.copyToClipboard(label: String, value: String) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
     Toast.makeText(this, "$label copied", Toast.LENGTH_SHORT).show()
+}
+
+/** Compact inline error line for the push diagnostics rows. */
+@Composable
+private fun ErrorLine(message: String) {
+    Text(
+        text = message,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+/**
+ * SHA-1 fingerprint of this APK's signing certificate. Firebase rejects
+ * installation registrations when the API key carries Android app
+ * restrictions and the installed build's fingerprint is not listed in the
+ * console — surfacing it here lets the developer paste it straight into
+ * Firebase Console → Project settings → Your apps → Add fingerprint.
+ */
+private fun signingCertSha1(context: Context): String? = try {
+    val pm = context.packageManager
+    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+    } else {
+        @Suppress("DEPRECATION")
+        pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES)
+    }
+    val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        info.signingInfo?.apkContentsSigners
+    } else {
+        @Suppress("DEPRECATION")
+        info.signatures
+    }
+    val signature = signatures?.firstOrNull() ?: return null
+    val digest = MessageDigest.getInstance("SHA-1").digest(signature.toByteArray())
+    digest.joinToString(":") { "%02X".format(it.toInt() and 0xFF) }
+} catch (e: Exception) {
+    null
 }
 
 @Composable

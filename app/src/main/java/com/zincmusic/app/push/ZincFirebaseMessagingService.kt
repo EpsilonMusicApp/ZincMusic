@@ -57,10 +57,10 @@ class ZincFirebaseMessagingService : FirebaseMessagingService() {
         Log.d(TAG, "Registered with Firebase installation ID")
     }
 
+    // Still delivered for token rotations; deprecated in favour of the FID
+    // registration flow (onRegistered + FirebaseInstallations.getId()).
+    @Suppress("DEPRECATION")
     override fun onNewToken(token: String) {
-        // Legacy registration token callback (deprecated in favour of FIDs but
-        // still delivered). Topic subscriptions survive token rotation on the
-        // server side, so there is nothing to re-subscribe here.
         PushDiagnostics.storeToken(this, token)
         Log.d(TAG, "FCM registration token was rotated")
     }
