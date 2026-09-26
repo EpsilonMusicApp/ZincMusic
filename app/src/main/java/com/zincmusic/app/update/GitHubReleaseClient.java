@@ -19,6 +19,22 @@ public class GitHubReleaseClient {
         this.repo = repo;
     }
 
+    // Asset names have changed across the project's history (app-release.apk →
+    // ZincMusic-v<version>.apk, checksum.txt → checksums.txt). Match
+    // structurally so the updater keeps working no matter how assets are
+    // named: the first .apk asset is the APK, any "checksum*.txt" asset is
+    // the checksum file. This is what broke "Check for updates" — the parser
+    // could never find the renamed APK and reported every check as failed.
+    private static boolean isApkAsset(String name) {
+        return name != null && name.toLowerCase().endsWith(".apk");
+    }
+
+    private static boolean isChecksumAsset(String name) {
+        if (name == null) return false;
+        String n = name.toLowerCase();
+        return n.startsWith("checksum") && n.endsWith(".txt");
+    }
+
     public ReleaseInfo getLatestRelease() {
         try {
             String apiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest";
@@ -26,6 +42,7 @@ public class GitHubReleaseClient {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "Zinc Music-UpdateChecker");
+            connection.setRequestProperty("Accept", "application/vnd.github+json");
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
@@ -50,9 +67,9 @@ public class GitHubReleaseClient {
                 for (int i = 0; i < assets.length(); i++) {
                     JSONObject asset = assets.getJSONObject(i);
                     String name = asset.getString("name");
-                    if (name.equals("app-release.apk")) {
+                    if (isApkAsset(name) && apkUrl == null) {
                         apkUrl = asset.getString("browser_download_url");
-                    } else if (name.equals("checksum.txt")) {
+                    } else if (isChecksumAsset(name) && checksumUrl == null) {
                         checksumUrl = asset.getString("browser_download_url");
                     }
                 }
@@ -78,6 +95,7 @@ public class GitHubReleaseClient {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "Zinc Music-UpdateChecker");
+            connection.setRequestProperty("Accept", "application/vnd.github+json");
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
@@ -105,9 +123,9 @@ public class GitHubReleaseClient {
                         for (int i = 0; i < assets.length(); i++) {
                             JSONObject asset = assets.getJSONObject(i);
                             String name = asset.getString("name");
-                            if (name.equals("app-release.apk")) {
+                            if (isApkAsset(name) && apkUrl == null) {
                                 apkUrl = asset.getString("browser_download_url");
-                            } else if (name.equals("checksum.txt")) {
+                            } else if (isChecksumAsset(name) && checksumUrl == null) {
                                 checksumUrl = asset.getString("browser_download_url");
                             }
                         }
