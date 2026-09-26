@@ -48,9 +48,20 @@ class ZincFirebaseMessagingService : FirebaseMessagingService() {
         }
     }
 
+    override fun onRegistered(installationId: String) {
+        // Modern FID-based registration (firebase-messaging 25.1+, enabled via
+        // the firebase_messaging_installation_id_enabled manifest flag). Fires
+        // on app startup and routine syncs while auto-init is enabled. The FID
+        // is persisted so the Settings screen can surface it for test sends.
+        PushDiagnostics.storeInstallationId(this, installationId)
+        Log.d(TAG, "Registered with Firebase installation ID")
+    }
+
     override fun onNewToken(token: String) {
-        // Topic subscriptions survive token rotation on the server side,
-        // so there is nothing to re-subscribe here.
+        // Legacy registration token callback (deprecated in favour of FIDs but
+        // still delivered). Topic subscriptions survive token rotation on the
+        // server side, so there is nothing to re-subscribe here.
+        PushDiagnostics.storeToken(this, token)
         Log.d(TAG, "FCM registration token was rotated")
     }
 

@@ -10,6 +10,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -155,6 +157,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setupSystemBars()
+
+        // Firebase Cloud Messaging depends on Google Play services. Per the FCM
+        // setup guide, check availability at startup and offer to fix it when
+        // possible — never fatal, the music player itself runs without it.
+        ensureGooglePlayServices()
 
         playerViewModel.loadLastPlaybackState()
 
@@ -670,6 +677,28 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         setupSystemBars()
+    }
+
+    /**
+     * FCM setup guide: verify Google Play services availability on startup.
+     * Only raises the self-healing dialog when the outcome is user-resolvable
+     * (outdated / disabled / missing); the app itself never becomes unusable.
+     */
+    private fun ensureGooglePlayServices() {
+        try {
+            if (isFinishing) return
+            val availability = GoogleApiAvailability.getInstance()
+            val status = availability.isGooglePlayServicesAvailable(this)
+            if (status != ConnectionResult.SUCCESS &&
+                availability.isUserResolvableError(status)
+            ) {
+                availability.makeGooglePlayServicesAvailable(this)
+                    .addOnFailureListener { /* user declined or it failed silently */ }
+            }
+        } catch (_: Exception) {
+            // Play services unavailable on this device (e.g. de-Googled ROMs) —
+            // Firebase stays dormant, everything else keeps working.
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

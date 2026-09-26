@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.zincmusic.app.data.innertube.InnerTubeClient
 import com.zincmusic.app.data.innertube.NewPipeStreamExtractor
+import com.zincmusic.app.push.PushDiagnostics
 import com.zincmusic.app.util.CacheManager
 import com.google.android.material.color.DynamicColors
 import com.google.firebase.FirebaseApp
@@ -182,6 +183,17 @@ class ZincMusicApplication : Application(), ImageLoaderFactory {
         try {
             if (FirebaseApp.getApps(this).isNotEmpty()) {
                 FirebaseMessaging.getInstance().subscribeToTopic("all")
+                // Fetch the current registration token so it is available in
+                // Settings → Notifications for Firebase Console test messages
+                // (Engage → Messaging → Send test message) right after install.
+                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        PushDiagnostics.storeToken(this, task.result)
+                        Log.d(TAG, "FCM registration token ready for test sends")
+                    } else {
+                        Log.w(TAG, "FCM registration token fetch failed: ${task.exception?.message}")
+                    }
+                }
                 Log.i(TAG, "Firebase ready: analytics, crashlytics and topic 'all' subscribed")
             } else {
                 Log.i(TAG, "Firebase config not present (no google-services.json) - telemetry dormant")

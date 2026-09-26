@@ -6,6 +6,7 @@
 
 package com.zincmusic.app.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
@@ -15,7 +16,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.provider.Settings
 import androidx.compose.foundation.Image
 import android.net.Uri
 import android.os.Build
@@ -24,7 +27,9 @@ import android.os.Vibrator
 import android.webkit.CookieManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -69,10 +74,12 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.Campaign
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PlayCircle
@@ -128,6 +135,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -141,8 +149,11 @@ import androidx.navigation.compose.rememberNavController
 import com.zincmusic.app.BuildConfig
 import com.zincmusic.app.MainActivity
 import com.zincmusic.app.R
+import com.zincmusic.app.push.InAppNotificationCenter
+import com.zincmusic.app.push.PushDiagnostics
 import com.zincmusic.app.ui.player.SleepTimerBottomSheet
 import com.zincmusic.app.viewmodel.PlayerSharedViewModel
+import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -969,6 +980,9 @@ fun SettingsScreenContent(
                 onHapticFavoriteChange = { viewModel.setHapticFavorite(it) }
             )
         }
+        composable(SettingsRoute.Notifications.route) {
+            NotificationsScreen(navController = navController)
+        }
         composable(SettingsRoute.About.route) {
             AboutScreen(
                 navController = navController,
@@ -1028,6 +1042,7 @@ sealed class SettingsRoute(val route: String) {
     object Appearance : SettingsRoute("appearance")
     object Playback : SettingsRoute("playback")
     object Haptics : SettingsRoute("haptics")
+    object Notifications : SettingsRoute("notifications")
     object About : SettingsRoute("about")
     object Feedback : SettingsRoute("feedback")
     object WhatsNew : SettingsRoute("whats_new")
@@ -1113,6 +1128,14 @@ private fun SettingsMainScreen(navController: androidx.navigation.NavController)
                         subtitle = "Vibration strength, haptic feedback",
                         icon = Icons.Rounded.Vibration,
                         onClick = { navController.navigate(SettingsRoute.Haptics.route) }
+                    )
+                },
+                {
+                    SettingsCategoryItem(
+                        title = "Notifications",
+                        subtitle = "Announcements, permission, push diagnostics",
+                        icon = Icons.Rounded.Notifications,
+                        onClick = { navController.navigate(SettingsRoute.Notifications.route) }
                     )
                 },
                 {
@@ -2197,6 +2220,282 @@ private fun WhatsNewScreen(navController: androidx.navigation.NavController) {
             }
         }
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS (FCM announcements) — permission re-ask + push diagnostics
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@Composable
+private fun NotificationsScreen(navController: androidx.navigation.NavController) {
+    val context = LocalContext.current
+
+    // Android 13+ requires the runtime POST_NOTIFICATIONS permission for system
+    // notifications; the in-app banner always works. Pre-13 devices are
+    // implicitly granted.
+    var notifGranted by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> notifGranted = granted }
+
+    val firebaseConfigured = remember { FirebaseApp.getApps(context).isNotEmpty() }
+    var token by remember { mutableStateOf(PushDiagnostics.getToken(context)) }
+    var installationId by remember { mutableStateOf(PushDiagnostics.getInstallationId(context)) }
+
+    Scaffold(
+        topBar = { SettingsDetailTopBar("Notifications") { navController.popBackStack() } }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 120.dp)
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ── Announcement status card ─────────────────────────────────────
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Rounded.Campaign,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = "Announcements",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = "Zinc Music receives announcements from the developer " +
+                            "through Firebase. While you are using the app they appear as a " +
+                            "banner at the top of the screen; when the app is in the " +
+                            "background they arrive as system notifications.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(16.dp))
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notifGranted) {
+                        Text(
+                            text = "System notifications are currently blocked — only " +
+                                "in-app banners will be shown.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(Modifier.height(14.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(
+                                onClick = {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Rounded.Notifications, null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Allow notifications")
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = { context.openAppNotificationSettings() }) {
+                            Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("Open system settings")
+                        }
+                    } else {
+                        Text(
+                            text = "System notifications are enabled.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Button(
+                                onClick = { context.openAppNotificationSettings() },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Rounded.OpenInNew, null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Notification settings")
+                            }
+                            Button(
+                                onClick = {
+                                    InAppNotificationCenter.post(
+                                        "Zinc Music",
+                                        "This is how in-app announcements look."
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Rounded.Campaign, null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Preview banner")
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── Push diagnostics card ────────────────────────────────────────
+            if (firebaseConfigured) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            text = "Push diagnostics",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = "Identifiers this install uses for Firebase test " +
+                                "messages. Paste the registration token into Firebase " +
+                                "Console → Messaging → Send test message to try a push " +
+                                "on this device.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(12.dp))
+
+                        DiagnosticsRow(
+                            label = "Firebase project",
+                            value = FirebaseApp.getInstance()
+                                .options.projectId ?: "connected",
+                            copyable = false
+                        )
+                        DiagnosticsRow(
+                            label = "Announcement topic",
+                            value = "all",
+                            copyable = false
+                        )
+                        DiagnosticsRow(
+                            label = "Installation ID",
+                            value = installationId ?: "registering…",
+                            copyable = installationId != null,
+                            onCopy = { installationId?.let { context.copyToClipboard("Installation ID", it) } }
+                        )
+                        DiagnosticsRow(
+                            label = "Registration token",
+                            value = token?.take(48)?.plus(if ((token?.length ?: 0) > 48) "…" else "")
+                                ?: "fetching…",
+                            copyable = token != null,
+                            onCopy = { token?.let { context.copyToClipboard("Registration token", it) } }
+                        )
+                        if (token == null || installationId == null) {
+                            Spacer(Modifier.height(6.dp))
+                            TextButton(onClick = {
+                                token = PushDiagnostics.getToken(context)
+                                installationId = PushDiagnostics.getInstallationId(context)
+                            }) {
+                                Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Refresh")
+                            }
+                        }
+                    }
+                }
+            } else {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            text = "Firebase is not configured on this build, so push " +
+                                "announcements are disabled.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DiagnosticsRow(
+    label: String,
+    value: String,
+    copyable: Boolean = false,
+    onCopy: (() -> Unit)? = null
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        supportingContent = {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        trailingContent = if (copyable) {
+            {
+                IconButton(onClick = { onCopy?.invoke() }) {
+                    Icon(
+                        Icons.Rounded.ContentCopy,
+                        contentDescription = "Copy",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else null,
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+    )
+}
+
+private fun Context.openAppNotificationSettings() {
+    try {
+        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        startActivity(intent)
+    } catch (_: Exception) {
+        // Very old OEM ROMs may not expose the dedicated screen.
+    }
+}
+
+private fun Context.copyToClipboard(label: String, value: String) {
+    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
+    Toast.makeText(this, "$label copied", Toast.LENGTH_SHORT).show()
 }
 
 @Composable
