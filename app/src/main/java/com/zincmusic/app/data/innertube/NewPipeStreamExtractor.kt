@@ -104,8 +104,16 @@ object NewPipeStreamExtractor {
             Log.d(TAG, "StreamInfo.getInfo took ${System.currentTimeMillis() - infoStart}ms for $videoId")
             synchronized(cacheLock) { streamInfoCache.put(videoId, info) }
             info
-        } catch (e: Exception) {
-            Log.e(TAG, "Stream extraction failed for $videoId: ${e.message}")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            // Deliberately catch Throwable, not just Exception: library runtime
+            // failures such as NoSuchMethodError / NoClassDefFoundError (LinkageError)
+            // are Errors and would otherwise fly through every coroutine in this
+            // object (the finally-only dedup blocks rethrow them) and crash the app.
+            // Converting them to null here lets callers fall back to the InnerTube
+            // player client instead (see YouTubeMusic.getStreamUrl).
+            Log.e(TAG, "Stream extraction failed for $videoId", e)
             null
         }
     }

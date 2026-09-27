@@ -286,7 +286,9 @@ object InnerTubeClient {
             // Add playbackContext containing signatureTimestamp to prevent HTTP 400/403
             val sigTimestamp = try {
                 org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
+                // Fail soft on anything (incl. LinkageErrors from the extractor) —
+                // the signature timestamp is an optional anti-403 enhancement.
                 null
             }
             sigTimestamp?.let { timestamp ->
@@ -314,7 +316,7 @@ object InnerTubeClient {
         // CRITICAL: Dynamically fetch matching signature timestamp to pair with the cipher engine!
         val sigTimestamp = try {
             org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager.getSignatureTimestamp(videoId)
-        } catch (_: Exception) { null }
+        } catch (_: Throwable) { null }
 
         val androidResult = playerWithClient(
             videoId, playlistId,

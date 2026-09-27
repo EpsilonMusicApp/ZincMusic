@@ -17,7 +17,6 @@ materialprogressbar = "1.6.1"
 materialVersion = "1.14.0"
 media = "1.7.1"
 navigationUi = "2.9.7"
-newpipeextractor = "v0.26.1"
 palette = "1.0.0"
 preference = "1.2.1"
 pulltorefresh = "1.0.1"
@@ -59,7 +58,6 @@ material-v1140alpha08 = { module = "com.google.android.material:material", versi
 navigation-fragment = { module = "androidx.navigation:navigation-fragment", version.ref = "navigationUi" }
 navigation-ui = { module = "androidx.navigation:navigation-ui", version.ref = "navigationUi" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationUi" }
-newpipeextractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeextractor" }
 palette = { module = "androidx.palette:palette", version.ref = "palette" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

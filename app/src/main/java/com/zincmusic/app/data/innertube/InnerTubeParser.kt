@@ -371,7 +371,8 @@ object InnerTubeParser {
                             val separator = if (streamUrl.contains("?")) "&" else "?"
                             url = "$streamUrl$separator$sp=$encodedSig"
                         }
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
+                        // Throwable (not Exception): library Errors must not crash the app here.
                         Log.e(TAG, "Signature decryption failed for $videoId", e)
                     }
                 }
@@ -380,7 +381,8 @@ object InnerTubeParser {
                 if (url != null) {
                     try {
                         url = org.schabi.newpipe.extractor.services.youtube.YoutubeJavaScriptPlayerManager.getUrlWithThrottlingParameterDeobfuscated(videoId, url)
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
+                        // Throwable (not Exception): library Errors must not crash the app here.
                         Log.w(TAG, "Failed to deobfuscate throttling parameter", e)
                     }
                 }
